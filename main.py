@@ -4,7 +4,7 @@ from PyQt5.QtWidgets import QApplication, QMainWindow, QTableWidgetItem, QMessag
 from PyQt5.QtCore import Qt, QTimer,QUrl
 from PyQt5.QtMultimedia import QSound,QMediaPlayer, QMediaContent
 from PyQt5.QtGui import QPixmap
-from database import save_match, get_matches, get_teams, save_team, delete_team,get_team_by_id
+from database import save_match, get_matches, get_teams, save_team, delete_team,get_team_by_id,save_match
 from new import Ui_MainWindow
 
 class TeamApp(QMainWindow):
@@ -22,6 +22,11 @@ class TeamApp(QMainWindow):
         self.ui.addTeamButton.clicked.connect(self.add_team)
         self.ui.start_timer.clicked.connect(self.start_timer)
         self.ui.reset_timer.clicked.connect(self.reset_timer)
+        self.team1_dropdown()
+
+
+
+
 
         # Initialize scores
         self.team1_score = 0
@@ -65,13 +70,13 @@ class TeamApp(QMainWindow):
         self.ui.team2_score.setText("0")
         self.ui.Margin.setText("0")
 
-    # def load_match_history(self):
-    #     """Load match history."""
-    #     matches = get_matches()
-    #     self.ui.TournamentName.setRowCount(len(matches))
-    #     for row, match in enumerate(matches):
-    #         for col, data in enumerate(match):
-    #             self.ui.TournamentName.setItem(row, col, QTableWidgetItem(str(data)))
+    def load_match_history(self):
+        """Load match history."""
+        matches = get_matches()
+        self.ui.tableWidget_2.setRowCount(len(matches))
+        for row, match in enumerate(matches):
+            for col, data in enumerate(match):
+                self.ui.TournamentName.setItem(row, col, QTableWidgetItem(str(data)))
 
     def load_teams(self):
         """Loads teams from the database."""
@@ -122,6 +127,7 @@ class TeamApp(QMainWindow):
             delete_team(team_id)
             # Reload the team list
             self.load_teams()
+            self.team1_dropdown()
 
 
 
@@ -146,16 +152,74 @@ class TeamApp(QMainWindow):
         team_name = self.ui.teamNameInput.text()
         logo_path = self.ui.teamLogoPath.text()
 
-        if not team_name or not logo_path:
+        if not team_name:
             QMessageBox.warning(self, "Error", "Enter team name and upload logo!")
             return
 
         save_team(team_name, logo_path)
         self.load_teams()
+        self.team1_dropdown()
 
         QMessageBox.information(self, "Success", "Team added successfully!")
         self.ui.teamNameInput.clear()
         self.ui.teamLogoLabel.clear()
+
+
+    def create_match(self):
+        """Create a match."""
+        team1 = self.ui.team1_name.text()
+        team2 = self.ui.team2_name.text()
+        score1 = int(self.ui.team1_score.text())
+        score2 = int(self.ui.team2_score.text())
+        margin = abs(score1 - score2)
+
+        if not team1 or not team2:
+            QMessageBox.warning(self, "Error", "Enter team names!")
+            return
+
+        save_match(team1, team2, score1, score2, margin)
+        self.load_match_history()
+
+        QMessageBox.information(self, "Success", "Match created successfully!")
+        self.ui.team1_name.clear()
+        self.ui.team2_name.clear()
+        self.ui.team1_score.clear()
+        self.ui.team2_score.clear()
+        self.ui.Margin.clear()
+
+
+
+    def team1_dropdown(self):
+        """Populate Team 1 dropdown (Away)."""
+        self.teams = get_teams()  # assume it returns list like [(1, 'Lions'), (2, 'Tigers')]
+        # print("Teams loaded:", self.teams)
+
+        self.ui.combobox_home.blockSignals(True)
+        self.ui.combobox_home.clear()
+
+        for team in self.teams:
+            self.ui.combobox_home.addItem(team[1])
+
+        self.ui.combobox_home.setCurrentIndex(-1)
+        self.ui.combobox_home.blockSignals(False)
+
+        # connect signal AFTER populating
+        self.ui.combobox_home.currentIndexChanged.connect(self.update_team2_dropdown)
+
+
+    def update_team2_dropdown(self):
+        """Update Team 2 (Home) dropdown, excluding selected Team 1."""
+        selected_team1 = self.ui.combobox_home.currentText()
+        self.ui.combobox_away.blockSignals(True)
+        self.ui.combobox_away.clear()
+
+        for team in self.teams:
+            if team[1] != selected_team1:
+                self.ui.combobox_away.addItem(team[1])
+
+        self.ui.combobox_away.setCurrentIndex(-1)
+        self.ui.combobox_away.blockSignals(False)
+
 
 
     def start_timer(self):

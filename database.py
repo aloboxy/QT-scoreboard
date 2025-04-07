@@ -12,7 +12,8 @@ def init_db():
     CREATE TABLE IF NOT EXISTS teams (
         id INTEGER PRIMARY KEY AUTOINCREMENT,
         name TEXT NOT NULL,
-        logo TEXT NOT NULL
+        logo TEXT NULL,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     )""")
 
     cursor.execute("""
@@ -101,6 +102,21 @@ def save_team(name, logo):
         INSERT INTO teams (name, logo)
         VALUES (?, ?)
     ''', (name, logo))
+    conn.commit()
+    conn.close()
+
+def save_matches(team1, team2, score1, score2, margin):
+    """Save team data to the database"""
+    conn = sqlite3.connect(DB_NAME_TEAMS)
+    cursor = conn.cursor()
+
+    cursor.execute('''
+        INSERT INTO teams (team1, team2, score1, score2, margin)
+        VALUES (?, ?)
+    ''', (team1, team2, score1, score2, margin))
+
+    conn.commit()
+    conn.close()
 
     conn.commit()
     conn.close()

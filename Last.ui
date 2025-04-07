@@ -26,7 +26,8 @@
    <string>MainWindow</string>
   </property>
   <property name="windowIcon">
-   <iconset theme="School"/>
+   <iconset theme="School">
+    <normaloff>.</normaloff>.</iconset>
   </property>
   <property name="documentMode">
    <bool>true</bool>
@@ -391,8 +392,8 @@
      <widget class="QPushButton" name="pushButton">
       <property name="geometry">
        <rect>
-        <x>1060</x>
-        <y>148</y>
+        <x>1170</x>
+        <y>150</y>
         <width>161</width>
         <height>41</height>
        </rect>
@@ -404,21 +405,6 @@
       </property>
       <property name="text">
        <string>Creat Game</string>
-      </property>
-     </widget>
-     <widget class="QLineEdit" name="lineEdit_3">
-      <property name="geometry">
-       <rect>
-        <x>760</x>
-        <y>150</y>
-        <width>271</width>
-        <height>41</height>
-       </rect>
-      </property>
-      <property name="font">
-       <font>
-        <pointsize>20</pointsize>
-       </font>
       </property>
      </widget>
      <widget class="QLabel" name="gametitle_label">
@@ -440,6 +426,21 @@
       </property>
       <property name="alignment">
        <set>Qt::AlignCenter</set>
+      </property>
+     </widget>
+     <widget class="QLineEdit" name="gameTitle">
+      <property name="geometry">
+       <rect>
+        <x>750</x>
+        <y>150</y>
+        <width>381</width>
+        <height>41</height>
+       </rect>
+      </property>
+      <property name="font">
+       <font>
+        <pointsize>20</pointsize>
+       </font>
       </property>
      </widget>
     </widget>
@@ -587,7 +588,8 @@
        <string>+10</string>
       </property>
       <property name="icon">
-       <iconset theme="Green"/>
+       <iconset theme="Green">
+        <normaloff>.</normaloff>.</iconset>
       </property>
      </widget>
      <widget class="QPushButton" name="team1_10">
@@ -774,7 +776,7 @@
        </font>
       </property>
       <property name="text">
-       <string notr="true">30</string>
+       <string notr="true">10</string>
       </property>
       <property name="alignment">
        <set>Qt::AlignCenter</set>
