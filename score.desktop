@@ -1,0 +1,7 @@
+[Desktop Entry]
+Type=Application
+Name=ScoreBoard
+Exec=/full/path/to/dist/main
+Icon=/full/path/to/assets/logo.png
+Terminal=false
+Categories=Utility;

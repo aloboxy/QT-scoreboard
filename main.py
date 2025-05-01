@@ -1,8 +1,8 @@
 import sys,shutil,time,os
 import sqlite3
 from PyQt5.QtWidgets import QApplication, QMainWindow, QTableWidgetItem, QMessageBox, QLabel, QPushButton, QFileDialog, QWidget, QHBoxLayout,QLineEdit
-from PyQt5.QtCore import Qt, QTimer,QUrl
-from PyQt5.QtMultimedia import QSound,QMediaPlayer, QMediaContent
+from PyQt5.QtCore import Qt, QTimer,QUrl,QDir
+from PyQt5.QtMultimedia import QMediaPlayer, QMediaContent,QSound
 from PyQt5.QtGui import QPixmap
 from database import save_match, get_matches, get_teams, save_team, delete_team,get_team_by_id,save_match
 from new import Ui_MainWindow
@@ -12,6 +12,7 @@ class TeamApp(QMainWindow):
         super().__init__()
         self.ui = Ui_MainWindow()
         self.ui.setupUi(self)
+
         self.timer = QTimer(self)
         self.timer.timeout.connect(self.update_timer)
 
@@ -22,10 +23,14 @@ class TeamApp(QMainWindow):
         self.ui.addTeamButton.clicked.connect(self.add_team)
         self.ui.start_timer.clicked.connect(self.start_timer)
         self.ui.reset_timer.clicked.connect(self.reset_timer)
-        self.team1_dropdown()
+        self.ui.reset.clicked.connect(self.reset_game)
 
-
-
+        # self.ui.checkBox.setStyleSheet("QCheckBox::indicator {width:25px; height:25px;}")
+        # self.ui.checkBox_3.setStyleSheet("QCheckBox::indicator {width:25px; height:25px;}")
+        # self.ui.checkBox_2.setStyleSheet("QCheckBox::indicator {width:25px; height:25px;}")
+        # self.ui.checkBox_4.setStyleSheet("QCheckBox::indicator {width:25px; height:25px;}")
+        # self.ui.checkBox_5.setStyleSheet("QCheckBox::indicator {width:25px; height:25px;}")
+        # self.ui.checkBox_6.setStyleSheet("QCheckBox::indicator {width:25px; height:25px;}")
 
 
         # Initialize scores
@@ -41,19 +46,34 @@ class TeamApp(QMainWindow):
         self.ui.team2_minus_5.clicked.connect(lambda: self.update_score(2, -5))
 
         self.tick_player = QMediaPlayer()
-        self.tick_player.setMedia(QMediaContent(QUrl.fromLocalFile("assets/second.mp3")))
+        self.tick_player = QSound("assets/slow-tick.wav")
+        # self.tick_player.setMedia(QMediaContent(QUrl.fromLocalFile(sound_path)))
 
         self.alarm_player = QMediaPlayer()
-        self.alarm_player.setMedia(QMediaContent(QUrl.fromLocalFile("assets/timer.mp3")))
+        sound_path = QDir.current().absoluteFilePath("assets/timer.mp3")
+        self.alarm_player.setMedia(QMediaContent(QUrl.fromLocalFile(sound_path)))
 
+    def reset_game(self):
+        reply = QMessageBox.information(self, "Warning", "Are You sure you want to reset this game?", QMessageBox.Yes | QMessageBox.No)
+        if reply == QMessageBox.No:
+            return
+        else:
+            self.ui.teamname_live2_2.clear()
+            self.ui.teamname_live2.clear()
+            self.ui.team1_score.setText("0")
+            self.ui.team2_score.setText("0")
+            self.ui.Margin.setText("0")
+            self.team1_score = 0
+            self.team2_score = 0
+            self.Margin = 0
 
     def update_score(self, team, change):
         """Update team scores and calculate margin."""
         if team == 1:
-            self.team1_score = max(0, self.team1_score + change)
+            self.team1_score = max(-1500, self.team1_score + change)
             self.ui.team1_score.setText(str(self.team1_score))
         else:
-            self.team2_score = max(0, self.team2_score + change)
+            self.team2_score = max(-1500, self.team2_score + change)
             self.ui.team2_score.setText(str(self.team2_score))
 
         margin = abs(self.team1_score - self.team2_score)
@@ -163,6 +183,7 @@ class TeamApp(QMainWindow):
         QMessageBox.information(self, "Success", "Team added successfully!")
         self.ui.teamNameInput.clear()
         self.ui.teamLogoLabel.clear()
+        self.ui.teamLogoPath.clear()
 
 
     def create_match(self):
@@ -189,39 +210,6 @@ class TeamApp(QMainWindow):
 
 
 
-    def team1_dropdown(self):
-        """Populate Team 1 dropdown (Away)."""
-        self.teams = get_teams()  # assume it returns list like [(1, 'Lions'), (2, 'Tigers')]
-        # print("Teams loaded:", self.teams)
-
-        self.ui.combobox_home.blockSignals(True)
-        self.ui.combobox_home.clear()
-
-        for team in self.teams:
-            self.ui.combobox_home.addItem(team[1])
-
-        self.ui.combobox_home.setCurrentIndex(-1)
-        self.ui.combobox_home.blockSignals(False)
-
-        # connect signal AFTER populating
-        self.ui.combobox_home.currentIndexChanged.connect(self.update_team2_dropdown)
-
-
-    def update_team2_dropdown(self):
-        """Update Team 2 (Home) dropdown, excluding selected Team 1."""
-        selected_team1 = self.ui.combobox_home.currentText()
-        self.ui.combobox_away.blockSignals(True)
-        self.ui.combobox_away.clear()
-
-        for team in self.teams:
-            if team[1] != selected_team1:
-                self.ui.combobox_away.addItem(team[1])
-
-        self.ui.combobox_away.setCurrentIndex(-1)
-        self.ui.combobox_away.blockSignals(False)
-
-
-
     def start_timer(self):
         """Start countdown based on user input"""
         text = self.ui.lineEdit_2.text()
@@ -231,11 +219,16 @@ class TeamApp(QMainWindow):
         self.remaining_time = int(text)
         self.ui.count_down_2.setText(self.format_time(self.remaining_time))
         self.ui.count_down.setText(self.format_time(self.remaining_time))
+        self.alarm_player.stop()
+        self.tick_player.stop()
         self.timer.start(1000)  # Trigger every 1 second
 
     def reset_timer(self):
         """Reset timer to user input value"""
         self.timer.stop()
+        self.alarm_player.stop()
+        self.tick_player.stop()
+      
         text = self.ui.lineEdit_2.text()
         if not text.isdigit():
             QMessageBox.warning(self, "Invalid Input", "Please enter a valid number of seconds.")
@@ -250,14 +243,14 @@ class TeamApp(QMainWindow):
         if self.remaining_time > 0:
             self.remaining_time -= 1
             self.ui.count_down_2.setText(self.format_time(self.remaining_time))
-            self.ui.count_down.setText(self.format_time(self.remaining_time))
-            self.tick_player.stop()  # ensure it starts from beginning
+            self.ui.count_down.setText(self.format_time(self.remaining_time)) # ensure it starts from beginning
             self.tick_player.play()
         else:
             self.timer.stop()
             self.ui.count_down_2.setText("TIME UP!")
             self.ui.count_down.setText("TIME UP!")
-            self.alarm_player.stop()  # ensure it starts from beginning
+            self.alarm_player.stop()
+            self.tick_player.stop()   # ensure it starts from beginning
             self.alarm_player.play()
             # Play alarm sound
 
